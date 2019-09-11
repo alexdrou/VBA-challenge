@@ -1,0 +1,143 @@
+Sub ticker()
+
+Dim i As Variant, j As Variant, k As Integer, lastRow As Variant, maxPercent As Double, minPercent As Double, maxVolume As Variant
+
+'CHALLENGE 2: This for-loop allows the code to run though all worksheets
+For k = 1 To Worksheets.Count
+
+lastRow = Cells(Rows.Count, 1).End(xlUp).Row
+
+'TICKER CALC
+
+Dim currentTicker As String, outputRow As Long
+
+outputRow = 2
+
+Cells(1, 9).Value = "Ticker"
+
+For i = 2 To lastRow
+
+    If Cells(i, 1).Value <> currentTicker Then
+        currentTicker = Cells(i, 1).Value
+        Cells(outputRow, 9).Value = currentTicker
+        outputRow = outputRow + 1
+    End If
+      
+Next i
+
+'TOTAL VOLUME CALC
+
+Dim volume As Variant
+
+lastRow = Cells(Rows.Count, 1).End(xlUp).Row
+
+maxVolume = 0
+volume = 0
+outputRow = 2
+
+Cells(1, 12).Value = "Total Stock Volume"
+
+Cells(4, 14).Value = "Greatest Total Volume"
+Cells(1, 15).Value = "Ticker"
+Cells(1, 16).Value = "Value"
+
+For i = 2 To lastRow + 1
+
+    volume = volume + Cells(i, 7).Value
+    
+    If Cells(i, 1) <> Cells(outputRow, 9) Then
+        Cells(outputRow, 12).Value = volume
+        outputRow = outputRow + 1
+        volume = 0
+    End If
+    
+    'Challenge 1: Max Volume
+    If volume > maxVolume Then
+        maxVolume = volume
+        Cells(4, 16).Value = volume
+        Cells(4, 15).Value = Cells(outputRow, 9).Value
+    End If
+    
+Next i
+
+'YEARLY CHANGE CALC
+
+Dim openPrice As Double, closePrice As Double, lastRowTicker As Long
+
+lastRowTicker = Cells(Rows.Count, 9).End(xlUp).Row
+
+outputRow = 2
+
+Cells(1, 10).Value = "Yearly Change"
+
+For i = 2 To lastRow
+  
+    If Cells(outputRow, 9).Value <> Cells(i + 1, 1).Value Then
+        'this means this is the last row of this stock ticker
+        openPrice = WorksheetFunction.VLookup(Cells(outputRow, 9), Range(Cells(2, 1), Cells(lastRow, 3)), 3, False)
+        closePrice = Cells(i, 6).Value
+        Cells(outputRow, 10).Value = closePrice - openPrice
+        
+        'Format the cell colors
+        If Cells(outputRow, 10).Value > 0 Then 'GREEN
+            Cells(outputRow, 10).Interior.ColorIndex = 4
+        ElseIf Cells(outputRow, 10).Value <= 0 Then 'RED
+            Cells(outputRow, 10).Interior.ColorIndex = 3
+        End If
+        
+        outputRow = outputRow + 1
+
+    End If
+    
+Next i
+
+
+'PERCENT CHANGE CALC
+
+maxPercent = 0
+minPercent = 0
+
+Cells(1, 11).Value = "Percent Change"
+
+Cells(2, 14).Value = "Greatest % Increase"
+Cells(3, 14).Value = "Greatest % Decrease"
+Cells(2, 16).NumberFormat = "0.00%"
+Cells(3, 16).NumberFormat = "0.00%"
+
+For i = 2 To lastRowTicker
+
+    openPrice = WorksheetFunction.VLookup(Cells(i, 9), Range(Cells(2, 1), Cells(lastRow, 3)), 3, False)
+    
+    If openPrice = 0 Then
+        Cells(i, 11).Value = 0
+    Else
+        Cells(i, 11).Value = Cells(i, 10).Value / openPrice
+    End If
+    
+    Cells(i, 11).NumberFormat = "0.00%"
+    
+    'CHALLENGE 1: max/min percent
+    If Cells(i, 11).Value > maxPercent Then
+        maxPercent = Cells(i, 11).Value
+        Cells(2, 16).Value = Cells(i, 11).Value
+        Cells(2, 15).Value = Cells(i, 9).Value
+    End If
+    
+    If Cells(i, 11).Value < minPercent Then
+        minPercent = Cells(i, 11).Value
+        Cells(3, 16).Value = Cells(i, 11).Value
+        Cells(3, 15).Value = Cells(i, 9).Value
+    End If
+       
+Next i
+
+'CHALLENGE 2: this continues the initial for-loop to run though all worksheets
+    If ActiveSheet.Index = Worksheets.Count Then
+        Worksheets(1).Activate
+    Else
+        ActiveSheet.Next.Activate
+    End If
+
+Next k
+
+End Sub
